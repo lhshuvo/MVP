@@ -1,0 +1,21 @@
+import pandas as pd
+import requests
+
+# Read the Excel file
+df = pd.read_excel('test.xlsx')
+
+# Loop through each row in the dataframe
+for index, row in df.iterrows():
+    email = row['email']
+    phone = row['phone']
+    source_link = row['source']
+    
+    # Check if the email and phone number exist in the source link
+    source_text = requests.get(source_link).text
+    if email not in source_text or phone not in source_text:
+        df.at[index, 'status'] = 'Not Found'
+    else:
+        df.at[index, 'status'] = 'Found'
+
+# Write the dataframe to an Excel file
+df.to_excel('data_marked.xlsx', index=False)

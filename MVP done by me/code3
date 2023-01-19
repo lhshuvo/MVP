@@ -1,0 +1,38 @@
+import pandas as pd
+import requests
+
+def check_email_phone():
+    file_path = "test.xlsx"
+    # read excel file
+    try:
+        df = pd.read_excel(file_path)
+    except FileNotFoundError:
+        print(f"{file_path} not found.")
+        return
+
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0;Win64) AppleWebkit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36'
+    }
+
+    # add new column to store the result
+    df['found'] = 'yes'
+    # iterate through each row of the dataframe
+    for index, row in df.iterrows():
+        email = row['email']
+        phone = row['phone']
+        source_link = row['source']
+        # make a request to the source link
+        try:
+            page = requests.get(source_link, headers=headers)
+            page.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            print(f"Error: {e}")
+            continue
+        # check if the email and phone are found on the page
+        if email not in page.text or phone not in page.text:
+            # mark the row as not found
+            df.loc[index, 'found'] = 'no'
+    # save the updated dataframe to the excel file
+    df.to_excel(file_path)
+
+check_email_phone()
