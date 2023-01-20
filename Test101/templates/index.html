@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload Excel File</title>
+  <style>
+    /* Add a background image */
+    body {
+      background-image: url("auto.jpg");
+      background-size: cover;
+    }
+
+    /* Add a modern font */
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
+    body {
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    /* Add styles for container and form elements */
+    .container {
+      width: 50%;
+      margin: 0 auto;
+      text-align: center;
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0px 0px 20px 0px #ccc;
+    }
+
+    .page-title {
+      margin-bottom: 30px;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    input[type="file"] {
+      margin-bottom: 20px;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      width: 100%;
+    }
+
+    /* Add styles for the submit button */
+    .btn {
+      background: linear-gradient(to right, #00b0ff, #008080);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 5px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+    }
+
+    /* Add hover effect for the submit button */
+    .btn:hover {
+      background-color: #286090;
+      cursor: pointer;
+    }
+
+    /* Add hover effect for the file input field */
+    input[type="file"]:hover {
+      border-color: #008080;
+      transition: border-color 0.2s ease-in-out;
+    }
+
+/* Add styles for the progress bar */
+progress {
+width: 100%;
+margin-bottom: 20px;
+border: 1px solid #ccc;
+border-radius: 5px;
+transition: width 0.2s ease-in-out;
+}
+
+/* Add css class for background color for the progress bar */
+progress.bg-color {
+background: #00b0ff;
+}
+</style>
+
+</head>
+<body>
+  <div class="container">
+    <h1 class="page-title">Upload Excel File</h1>
+    <form action="/output" method="post" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="x">Select Excel File:</label>
+        <input type="file" id="x" name="x" required>
+      </div>
+      <div class="form-group">
+        <progress id="progress-bar" value="0" class="bg-color"></progress>
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </div>
+    </form>
+  </div>
+  <script>
+    // JavaScript code to update progress bar
+    var input = document.getElementById("x");
+    var progressBar = document.getElementById("progress-bar");
+    input.addEventListener("change", function() {
+      var file = input.files[0];
+      var reader = new FileReader();
+      reader.onload = function(){
+        progressBar.value = 100;
+};
+reader.onprogress = function(e) {
+if (e.lengthComputable) {
+progressBar.value = (e.loaded / e.total) * 100;
+}
+};
+reader.readAsArrayBuffer(file);
+});
+</script>
+
+</body>
+</html>
