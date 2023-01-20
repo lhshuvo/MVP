@@ -73,36 +73,33 @@ def output():
                 else:
                     mail_validation.append(0)
 
-            # Lists to store the direct email and direct phone and the source url
             mail_address = [] 
-            phone = []
             link = []
+            phone = []
+            print(len(df))
+            for i in range(len(df)):
+        #Append the direct email and direct phone to their respective lists
+                 mail_address.append(df['DirectEmail'][i])
+            phone.append(df['DirectPhone'][i])
+            # Append the source url to the link list
+            link.append(df['Source'][i])
+        # Iterate through the dataframe to check if email is present in the website
+        for i in range(len(df)):   
+            is_email_present(mail_address[i], link[i])
 
-            # Check if the dataframe is not empty
-            if df.empty:
-                print('Dataframe is empty')
-                return
-            else:
-                # Iterate through the dataframe to store the data in the appropriate lists
-                for i in range(len(df)):
-                    # Append the direct email and direct phone to their respective lists
-                    mail_address.append(df['DirectEmail'][i])
-                    phone.append(df['DirectPhone'][i])
-                    # Append the source url to the link list
-                    link.append(df['Source'][i])
-                # Iterate through the dataframe to check if email is present in the website
-                for i in range(len(df)):   
-                    is_email_present(mail_address[i], link[i])
+        # Add the mail validation and response status to the dataframe
+        df["valid_email"] = mail_validation
+        df["response_type"] = responsess
 
-                # Add the mail validation and response status to the dataframe
-                df["valid_email"] = mail_validation
-                df["response_type"] = responsess
+        # Set the output filename
+        filename1 = 'C:/Users/Employee/Desktop/Work Folder/Leads Database Platform/MVP/Outputfile.xlsx'
 
-                # Set the output filename
-                filename1 = 'C:/Users/Employee/Desktop/Work Folder/Leads Database Platform/Test101/Outputfile.xlsx'
+        # Write the dataframe to excel
+        df.to_excel(filename1)
 
-                # Write the dataframe to excel
-                df.to_excel(filename1)
+        # Render the output template
+        return render_template('output.html')
+# Return 'Invalid request method' if the request method is not 'POST'
+    return 'Invalid request method'
 
-                # Render the output template
-                return render_template('output.html')
+app.run(port=1234, debug=True)
