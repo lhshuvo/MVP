@@ -3,19 +3,21 @@ import pandas as pd
 import requests
 from werkzeug.utils import secure_filename
 import os
+import random
+from fake_useragent import UserAgent
 
-# Initialize a Flask application
+#Initialize a Flask application
 app = Flask("Test101")
 
-# Set the location of the folder where uploaded files will be saved
+#Set the location of the folder where uploaded files will be saved
 app.config['UPLOAD_FOLDER'] = './'
 
-# Function to check if the file being uploaded is in the allowed file types
+#Function to check if the file being uploaded is in the allowed file types
 def allowed_file(filename):
     # Return true if the file extension is in the allowed file types
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ['xlsx', 'xls']
 
-# Route for the form submission
+#Route for the form submission
 @app.route('/', methods = ['GET', 'POST'])
 def myform():
     if request.method == 'POST':
@@ -36,8 +38,11 @@ def myform():
             df = pd.read_excel(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             responsess = []
             mail_validation = []
+            ua = UserAgent()
+
             def is_email_present(email,url):
-                response = requests.get(url)
+                headers = {'User-Agent': ua.random}
+                response = requests.get(url, headers=headers)
                 responsess.append(response)
                 if email in response.text:
                     mail_validation.append(1)
@@ -59,11 +64,11 @@ def myform():
             df.to_excel(filename1)
             return render_template('output.html')
     return render_template('index.html')
-# Route to download the output file
+
+#Route to download the output file
 @app.route('/download')
 def download_file():
-    return send_from_directory(app.config['UPLOAD_FOLDER'], 'Outputfile.xlsx', as_attachment=True)
+      return send_from_directory(app.config['UPLOAD_FOLDER'], 'Outputfile.xlsx', as_attachment=True)
 
 # Start the application
 app.run(port=1234, debug=True)
-
