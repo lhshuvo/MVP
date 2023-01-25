@@ -1,10 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
 import pandas as pd
 import requests
+import requests.exceptions
 from werkzeug.utils import secure_filename
 import os
 import random
 from fake_useragent import UserAgent
+from retry import retry
 
 #Initialize a Flask application
 app = Flask("Test101")
@@ -39,36 +41,39 @@ def myform():
             responsess = []
             mail_validation = []
             ua = UserAgent()
-
-            def is_email_present(email,url):
-                headers = {'User-Agent': ua.random}
-                response = requests.get(url, headers=headers)
-                responsess.append(response)
-                if email in response.text:
-                    mail_validation.append(1)
-                else:
-                    mail_validation.append(0)
-            mail_address = [] 
-            link = []
-            phone = []
-            print(len(df))
-            for i in range(len(df)):
-                mail_address.append(df['DirectEmail'][i])
-                phone.append(df['DirectPhone'][i])
-                link.append(df['Source'][i])
-            for i in range(len(df)):
-                is_email_present(mail_address[i], link[i])
-            df["valid_email"] = mail_validation
-            df["Response_Type"] = responsess
-            filename1 = 'Outputfile.xlsx'
-            df.to_excel(filename1)
-            return render_template('output.html')
+        @retry(exceptions=requests.exceptions.ConnectTimeout, tries=3, delay=2) #we can modify tries and delay the defualt was tries=3,delay=2
+        def is_email_present(email,url):
+            headers = {'User-Agent': ua.random}
+            response = requests.get(url, headers=headers)
+            responsess.append(response)
+            if email in response.text:
+                mail_validation.append(1)
+            else:
+                mail_validation.append(0)
+                
+        mail_address = [] 
+        link = []
+        phone = []
+        print(len(df))
+        for i in range(len(df)):
+            mail_address.append(df['DirectEmail'][i])
+            phone.append(df['DirectPhone'][i])
+            link.append(df['Source'][i])
+        for i in range(len(df)):
+            is_email_present(mail_address[i], link[i])
+        df["valid_email"] = mail_validation
+        df["Response_Type"] = responsess
+        filename1 = 'Outputfile.xlsx'
+        df.to_excel(filename1)
+        return render_template('output.html')
     return render_template('index.html')
-
 #Route to download the output file
 @app.route('/download')
 def download_file():
-      return send_from_directory(app.config['UPLOAD_FOLDER'], 'Outputfile.xlsx', as_attachment=True)
+     return send_from_directory(app.config['UPLOAD_FOLDER'], 'Outputfile.xlsx', as_attachment=True)
 
-# Start the application
 app.run(port=1234, debug=True)
+'''if __name__ == '__main__':
+    app.config['SERVER_NAME'] = 'example.com' #default = 'example.com'
+    app.run(host='127.0.0.1', port=1234, debug=False)''' 
+           
