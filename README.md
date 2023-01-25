@@ -1,4 +1,7 @@
 # MVP (Email and Phone Number validation software)
+
+https://automation.tokig.site/
+
 This code is a Flask web application that allows users to upload an excel file containing contact information (DirectEmail and DirectPhone) and a source link (Source). The application then reads the excel file using the pandas library, and for each row, it checks if the email address in the DirectEmail column is present on the webpage at the link in the Source column.
 
 The application uses the requests library to make GET requests to the webpage at the link in the Source column. It also uses the fake_useragent library to add a random User-Agent header to each request to prevent the website from blocking the requests. Additionally, the retry library is used to handle any ConnectTimeout exceptions that may occur when making the requests. This means that if a request times out, the is_email_present() function will automatically retry the request twice more with a delay of 2 seconds before giving up.
