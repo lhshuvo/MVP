@@ -1,0 +1,59 @@
+from flask import Flask, render_template, request, redirect, url_for
+import pandas as pd
+import requests
+from werkzeug.utils import secure_filename
+import os
+import random
+from fake_useragent import UserAgent
+
+app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = './'
+app.config['ALLOWED_EXTENSIONS'] = set(['xlsx', 'xls'])
+
+# Function to check if the file being uploaded is in the allowed file types
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
+
+@app.route('/', methods=['GET', 'POST'])
+def myform():
+    if request.method == 'POST':
+        file = request.files['file']
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            df = pd.read_excel(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            responsess = []
+            mail_validation = []
+            ua = UserAgent()
+
+            def is_email_present(email,url):
+                headers = {'User-Agent': ua.random}
+                response = requests.get(url, headers=headers)
+                responsess.append(response)
+                if email in response.text:
+                    mail_validation.append(1)
+                else:
+                    mail_validation.append(0)
+            mail_address = [] 
+            link = []
+            phone = []
+            for i in range(len(df)):
+                mail_address.append(df['DirectEmail'][i])
+                phone.append(df['DirectPhone'][i])
+                link.append(df['Source'][i])
+            for i in range(len(df)):
+                is_email_present(mail_address[i], link[i])
+            df["valid_email"] = mail_validation
+            df["Response_Type"] = responsess
+            filename1 = 'Outputfile.xlsx'
+            df.to_excel(filename1)
+            return render_template('output.html')
+    return render_template('index.html')
+
+@app.route('/download')
+def download_file():
+      return send_from_directory(app.config['UPLOAD_FOLDER'], 'Outputfile.xlsx', as_attachment=True)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=80)
