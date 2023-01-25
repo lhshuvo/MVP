@@ -41,7 +41,7 @@ def myform():
             responsess = []
             mail_validation = []
             ua = UserAgent()
-        @retry(exceptions=requests.exceptions.ConnectTimeout, tries=3, delay=2)
+        @retry(exceptions=requests.exceptions.ConnectTimeout, tries=3, delay=2) #we can modify tries and delay the defualt was tries=3,delay=2
         def is_email_present(email,url):
             headers = {'User-Agent': ua.random}
             response = requests.get(url, headers=headers)
@@ -73,5 +73,7 @@ def download_file():
      return send_from_directory(app.config['UPLOAD_FOLDER'], 'Outputfile.xlsx', as_attachment=True)
 
 app.run(port=1234, debug=True)
-
+'''if __name__ == '__main__':
+    app.config['SERVER_NAME'] = 'example.com'
+    app.run(host='127.0.0.1', port=1234, debug=False)'''
            
