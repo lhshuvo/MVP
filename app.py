@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
 import pandas as pd
+import numpy as np
 import requests
 import requests.exceptions
 from werkzeug.utils import secure_filename
@@ -63,9 +64,21 @@ def myform():
             is_email_present(mail_address[i], link[i])
         df["valid_email"] = mail_validation
         df["Response_Type"] = responsess
+        #count the number of matched and unmatched emails
+        matched_emails = sum(df["valid_email"])
+        unmatched_emails = len(df)-matched_emails
+        #add the summary to the dataframe
+        summary_row = pd.DataFrame({
+            "valid_email" : [np.nan],
+            "Response_Type": [np.nan],
+            "summary":["Matched: " + str(matched_emails) + " | Unmatched: " + str(unmatched_emails)]
+})
+        df = pd.concat([df, summary_row], ignore_index=True)
         filename1 = 'Outputfile.xlsx'
         df.to_excel(filename1)
+
         return render_template('output.html')
+       
     return render_template('index.html')
 #Route to download the output file
 @app.route('/download')
@@ -74,6 +87,6 @@ def download_file():
 
 app.run(port=1234, debug=True)
 '''if __name__ == '__main__':
-    app.config['SERVER_NAME'] = 'example.com' #default = 'example.com'
-    app.run(host='127.0.0.1', port=1234, debug=False)''' 
-           
+    app.config['SERVER_NAME'] = 'example.com'#default = 'example.com'
+    app.run(host='127.0.0.1', port=1234, debug=False)'''
+          
