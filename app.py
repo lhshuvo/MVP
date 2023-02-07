@@ -6,11 +6,9 @@ from werkzeug.utils import secure_filename
 import os
 import random
 from fake_useragent import UserAgent
-from retry import retry
 
 #Initialize a Flask application
 app = Flask("Test101")
-
 #Set the location of the folder where uploaded files will be saved
 app.config['UPLOAD_FOLDER'] = './'
 
@@ -28,7 +26,7 @@ def myform():
             flash('No file part')
             return redirect(request.url)
         file = request.files['x']
-        # Check if no file was selected for upload
+         # Check if no file was selected for upload
         if file.filename == '':
             flash('No selected file')
             return redirect(request.url)
@@ -41,40 +39,33 @@ def myform():
             responsess = []
             mail_validation = []
             ua = UserAgent()
-        @retry(exceptions=requests.exceptions.ConnectTimeout, tries=3, delay=2) #we can modify tries and delay the defualt was tries=3,delay=2
-        def is_email_present(email,url):
-            headers = {'User-Agent': ua.random}
-            response = requests.get(url, headers=headers)
-            responsess.append(response)
-            if email in response.text:
-                mail_validation.append(1)
-            else:
-                mail_validation.append(0)
-                
-        mail_address = [] 
-        link = []
-        phone = []
-        print(len(df))
+
+        headers = {'User-Agent': ua.random}
         for i in range(len(df)):
-            mail_address.append(df['DirectEmail'][i])
-            phone.append(df['DirectPhone'][i])
-            link.append(df['Source'][i])
-        for i in range(len(df)):
-            is_email_present(mail_address[i], link[i])
+            email = df['DirectEmail'][i]
+            link = df['Source'][i]
+            try:
+                response = requests.get(link, headers=headers)
+                responsess.append(response)
+                if email in response.text:
+                    mail_validation.append(1)
+                else:
+                    mail_validation.append(0)
+            except requests.exceptions.RequestException:
+                print(f"Request to {link} failed. Skipping...")
+                responsess.append("Request Error")
+                mail_validation.append(-1)
+        
         df["valid_email"] = mail_validation
         df["Response_Type"] = responsess
         filename1 = 'Outputfile.xlsx'
         df.to_excel(filename1)
         return render_template('output.html')
     return render_template('index.html')
+
 #Route to download the output file
 @app.route('/download')
 def download_file():
      return send_from_directory(app.config['UPLOAD_FOLDER'], 'Outputfile.xlsx', as_attachment=True)
 
 app.run(port=1234, debug=True)
-'''# if name == 'main':
-if __name__ == '__main__':
-    app.config['SERVER_NAME'] = 'malmo.pixeltokig.se' #default = 'example.com'
-    app.run(host='malmo.pixeltokig.se', debug=False)'''
-           
