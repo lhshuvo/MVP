@@ -1,0 +1,101 @@
+from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
+import pandas as pd
+from scrapy.crawler import CrawlerProcess
+from scrapy.spiders import CrawlSpider, Rule
+from scrapy.linkextractors import LinkExtractor
+from scrapy.item import Item, Field
+import os
+import random
+from fake_useragent import UserAgent
+from werkzeug.utils import secure_filename
+from tqdm import tqdm
+from multiprocessing import Process, Manager
+
+app = Flask("Test101")
+app.config['UPLOAD_FOLDER'] = './'
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ['xlsx', 'xls']
+
+class MySpider(CrawlSpider):
+    name = 'myspider'
+    allowed_domains = []
+    start_urls = []
+
+    rules = (
+        Rule(LinkExtractor(), callback='parse_item', follow=True),
+    )
+
+    def __init__(self, urls, *args, **kwargs):
+        super(MySpider, self).__init__(*args, **kwargs)
+        self.start_urls = urls
+        for url in urls:
+            self.allowed_domains.append(url.split('/')[2])
+
+    def parse_item(self, response):
+        item = {}
+        item['url'] = response.url
+        item['html'] = response.text
+        return item
+
+@app.route('/', methods=['GET', 'POST'])
+def myform():
+    if request.method == 'POST':
+        if 'x' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+        file = request.files['x']
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            df = pd.read_excel(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+            urls = list(df['Source'])
+            emails = list(df['DirectEmail'])
+
+            # Use a multiprocessing Manager to share results between processes
+            manager = Manager()
+            responsess = manager.list()
+            mail_validation = manager.list()
+            ua = UserAgent()
+
+            # Start a new process for the Scrapy crawler
+            p = Process(target=run_crawler, args=(urls, emails, ua, responsess, mail_validation))
+            p.start()
+            p.join()
+
+            df["valid_email"] = mail_validation
+            df["Response_Type"] = responsess
+            filename1 = 'Outputfile.xlsx'
+            df.to_excel(filename1)
+            return render_template('output.html')
+    return render_template('index.html')
+
+def run_crawler(urls, emails, ua, responsess, mail_validation):
+    process = CrawlerProcess(settings={
+        "FEEDS": {
+            "output.csv": {"format": "csv"},
+        },
+    })
+    process.crawl(MySpider, urls=urls)
+    process.start()
+
+    for i in tqdm(range(len(emails))):
+        link = urls[i]
+        response = responsess[i]
+        if response:
+            if emails[i] in response['html']:
+                mail_validation.append(1)
+            else:
+                mail_validation.append(0)
+        else:
+            mail_validation.append(-1)
+
+@app.route('/download')
+def download_file():
+     return send_from_directory(app.config['UPLOAD_FOLDER'], 'Outputfile.xlsx', as_attachment=True)
+
+app.run(port=1234, debug=True)
