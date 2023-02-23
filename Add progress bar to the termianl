@@ -44,7 +44,6 @@ def myform():
                 else:
                     mail_validation.append(0)
             except requests.exceptions.RequestException:
-                print(f"Request to {link} failed. Skipping...")
                 responsess.append("Request Error")
                 mail_validation.append(-1)
         
