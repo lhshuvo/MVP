@@ -43,6 +43,7 @@ def myform():
                 try:
                     headers = {'User-Agent': ua.random}
                     response = requests.get(link, headers=headers)
+                    content = response.content.decode('utf-8', errors='ignore')
                     content = re.sub(r'^\s*<\?xml [^>]+>\s*', '', response.content.decode('utf-8'), count=1)
                     soup = BeautifulSoup(content, 'lxml')
                     text = soup.get_text()
