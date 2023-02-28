@@ -1,0 +1,11 @@
+Sub FindUnmatched()
+    Dim i As Integer
+    Dim LastRow As Long
+    LastRow = ActiveSheet.Cells(Rows.Count, "V").End(xlUp).Row 'Get the last row with data in column AG
+    
+    For i = 1 To LastRow 'Loop through each row
+        If ActiveSheet.Cells(i, "V").Value <> ActiveSheet.Cells(i, "W").Value And ActiveSheet.Cells(i, "V").Value <> "" And ActiveSheet.Cells(i, "W").Value <> "" Then 'Check if the values in columns AG and AJ are different and both are not blank
+            ActiveSheet.Range("V" & i & ":W" & i).Interior.Color = vbYellow 'Mark the cells with unmatched values in yellow color
+        End If
+    Next i
+End Sub
