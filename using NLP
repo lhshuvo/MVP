@@ -6,10 +6,12 @@ import requests
 from requests.exceptions import RequestException
 from bs4 import BeautifulSoup
 from time import sleep
+from werkzeug.utils import secure_filename
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import LogisticRegression
 from email_validator import validate_email, EmailNotValidError
 from fake_useragent import UserAgent
+import pickle
 import random
 from tqdm import tqdm
 
@@ -86,3 +88,8 @@ def myform():
             }
             return render_template('summary.html', summary=summary)
     return render_template('index.html')
+@app.route('/download')
+def download_file():
+    return send_from_directory(app.config['UPLOAD_FOLDER'], 'Outputfile.xlsx', as_attachment=True)
+if __name__ == '__main__':
+    app.run(port=1234, debug=True)
