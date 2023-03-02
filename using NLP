@@ -1,0 +1,88 @@
+import re
+import pandas as pd
+from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
+import os
+import requests
+from requests.exceptions import RequestException
+from bs4 import BeautifulSoup
+from time import sleep
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.linear_model import LogisticRegression
+from email_validator import validate_email, EmailNotValidError
+from fake_useragent import UserAgent
+import random
+from tqdm import tqdm
+
+app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = './'
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ['xlsx', 'xls']
+
+
+def myform():
+    if request.method == 'POST':
+        if 'x' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+        file = request.files['x']
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            df = pd.read_excel(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            responsess = []
+            mail_validation = []
+            ua = UserAgent()
+
+            for i in tqdm(range(len(df))):
+                email = str(df['DirectEmail'][i])
+                link = df['Source'][i]
+                if pd.isna(email) or pd.isna(link):
+                    continue
+                try:
+                    headers = {'User-Agent': ua.random}
+                    response = requests.get(link, headers=headers)
+                    soup = BeautifulSoup(response.content, 'html.parser')
+                    text = soup.get_text()
+                    # Pre-filter email addresses using regular expression
+                    email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+                    emails = re.findall(email_pattern, text)
+                    emails = list(set(emails)) # Remove duplicates
+                    email_text = " ".join(emails)
+                    if not email_text:
+                        mail_validation.append(0)
+                        responsess.append(response)
+                        continue
+                    # Use CountVectorizer to transform text data into a bag-of-words representation
+                    vectorizer = CountVectorizer()
+                    X = vectorizer.fit_transform([email_text])
+                    # Load pre-trained Logistic Regression model
+                    model_path = "path/to/trained/model.pkl"
+                    model = pickle.load(open(model_path, 'rb'))
+                    # Predict the validity of the email addresses using the trained model
+                    y_pred = model.predict(X)
+                    if 1 in y_pred:
+                        mail_validation.append(1)
+                    else:
+                        mail_validation.append(0)
+                    responsess.append(response)
+                except RequestException:
+                    responsess.append("Request Error")
+                    mail_validation.append(-1)
+
+            df["valid_email"] = mail_validation
+            df["Response_Type"] = responsess
+            filename1 = 'Outputfile.xlsx'
+            df.to_excel(filename1)
+            summary = {
+                "total": len(df),
+                "valid_emails": len(df.loc[df['valid_email'] == 1]),
+                "invalid_emails": len(df.loc[df['valid_email'] == 0]),
+                "request_errors": len(df.loc[df['valid_email'] == -1]),
+            }
+            return render_template('summary.html', summary=summary)
+    return render_template('index.html')
