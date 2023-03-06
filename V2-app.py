@@ -42,8 +42,10 @@ def myform():
 
         headers = {'User-Agent': ua.random}
         for i in range(len(df)):
-            email = df['DirectEmail'][i]
+            email = str(df['DirectEmail'][i])
             link = df['Source'][i]
+            if pd.isna(email) or pd.isna(link):
+                continue
             try:
                 response = requests.get(link, headers=headers)
                 responsess.append(response)
