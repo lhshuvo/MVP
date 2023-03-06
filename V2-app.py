@@ -67,7 +67,7 @@ def myform():
                 "invalid_emails": len(df.loc[df['valid_email'] == 0]),
                 "request_errors": len(df.loc[df['valid_email'] == -1]),
             }
-        return render_template('output.html', summary=summary)
+        return render_template('summary.html', summary=summary)
     return render_template('index.html')
 
 #Route to download the output file
