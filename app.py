@@ -53,6 +53,8 @@ def myform():
                 email = str(df['DirectEmail'][i])
                 link = df['Source'][i]
                 if pd.isna(email) or pd.isna(link):
+                    mail_validation.append(0) 
+                    responsess.append('') 
                     continue
                 try:
                     if link.endswith('.pdf'):
