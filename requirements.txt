@@ -1,0 +1,7 @@
+Flask
+pandas
+requests
+fake_useragent
+tqdm
+beautifulsoup4
+PyMuPDF
