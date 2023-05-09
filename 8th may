@@ -81,7 +81,7 @@ def myform():
                         mail_validation[i] = -1
                         responsess.append("Request Error")
 
-            df["valid_email"] = mail_validation.values()
+            df["valid_email"] = [mail_validation.get(i, 0) for i in range(len(df))]
             df["Response_Type"] = responsess
             filename1 = 'Outputfile.xlsx'
             df.to_excel(filename1)
@@ -93,6 +93,7 @@ def myform():
             }
             return render_template('summary.html', summary=summary)
     return render_template('index.html')
+
 @app.route('/download')
 def download_file():
     return send_from_directory(app.config['UPLOAD_FOLDER'], 'Outputfile.xlsx', as_attachment=True)
