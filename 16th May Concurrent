@@ -29,7 +29,6 @@ def myform():
             responsess = []
             mail_validation = {}
             ua = UserAgent()
-
             with ThreadPoolExecutor(max_workers=10) as executor:
                 futures = []
                 for i, row in df.iterrows():
@@ -41,7 +40,6 @@ def myform():
                         continue
                     headers = {'User-Agent': ua.random}
                     futures.append(executor.submit(requests.get, link, headers=headers))
-
                 for i, future in enumerate(tqdm(futures)):
                     try:
                         response = future.result()
@@ -62,7 +60,6 @@ def myform():
                     except requests.exceptions.RequestException:
                         mail_validation[i] = -1
                         responsess.append("Request Error")
-
             df["valid_email"] = pd.Series(mail_validation)
             df["Response_Type"] = pd.Series(responsess)
             filename1 = 'Outputfile.xlsx'
