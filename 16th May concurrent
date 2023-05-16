@@ -38,7 +38,7 @@ def myform():
 
             with ThreadPoolExecutor(max_workers=10) as executor:
                 futures = []
-                for i in tqdm(range(len(df))):
+                for i in range(len(df)):
                     email = str(df['DirectEmail'][i])
                     link = df['Source'][i]
                     if pd.isna(email) or pd.isna(link):
