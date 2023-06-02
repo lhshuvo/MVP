@@ -7,6 +7,7 @@ import os
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
 from tqdm import tqdm
+import warnings
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = './'
 def allowed_file(filename):
@@ -43,7 +44,9 @@ def myform():
                     try:
                         response = future.result()
                         if isinstance(response, requests.Response):
-                            soup = BeautifulSoup(response.content, 'html5lib')
+                            with warnings.catch_warnings():
+                                warnings.filterwarnings("ignore", category=Warning)
+                                soup = BeautifulSoup(response.content, 'html5lib')
                             text = soup.get_text()
                             if '@' in text:
                                 mail_validation[i] = 1
